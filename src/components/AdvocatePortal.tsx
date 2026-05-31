@@ -1091,6 +1091,45 @@ export default function AdvocatePortal({ onBack }: { onBack: () => void }) {
       setScrollSliderVal(100 - scrollPct);
     }
   };
+
+  const leftColDragRef = useRef({ isDown: false, startY: 0, scrollTop: 0 });
+
+  const handleLeftColMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('input') || target.closest('textarea') || target.closest('a') || target.closest('[role="button"]')) {
+      return;
+    }
+    const leftCol = document.getElementById('command-left-column');
+    if (!leftCol) return;
+    leftColDragRef.current.isDown = true;
+    leftColDragRef.current.startY = e.pageY - leftCol.offsetTop;
+    leftColDragRef.current.scrollTop = leftCol.scrollTop;
+    leftCol.style.cursor = 'grabbing';
+    leftCol.style.userSelect = 'none';
+  };
+
+  const handleLeftColMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!leftColDragRef.current.isDown) return;
+    const leftCol = document.getElementById('command-left-column');
+    if (!leftCol) return;
+    e.preventDefault();
+    const y = e.pageY - leftCol.offsetTop;
+    const walk = (y - leftColDragRef.current.startY) * 1.5;
+    leftCol.scrollTop = leftColDragRef.current.scrollTop - walk;
+  };
+
+  const handleLeftColMouseUpOrLeave = () => {
+    leftColDragRef.current.isDown = false;
+    const leftCol = document.getElementById('command-left-column');
+    if (leftCol) {
+      leftCol.style.cursor = 'grab';
+      leftCol.style.userSelect = '';
+    }
+  };
+
+  const handleLeftColWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    e.currentTarget.scrollTop += e.deltaY;
+  };
   const [browserCompatibility, setBrowserCompatibility] = useState<{isCompatible: boolean, message: string}>({
     isCompatible: true,
     message: ''
@@ -2806,7 +2845,7 @@ Paragraph: [Detailed rationale of principle of law and application]
     <div style={S.page} className="fixed inset-0 z-[100] selection:bg-indigo-500/30">
       {/* SIDEBAR */}
       <div style={S.sidebar} className="custom-scrollbar">
-        <div className="w-full aspect-square bg-amber-500 flex items-center justify-center mb-4">
+        <div className="w-full h-16 bg-amber-500 flex items-center justify-center shrink-0 mb-4 border-b border-black/10">
           <span className="text-2xl font-black text-black">T</span>
         </div>
         {sideNav.map(item => {
@@ -2920,7 +2959,17 @@ Paragraph: [Detailed rationale of principle of law and application]
                 >
                   <div className="flex-shrink-0 flex flex-row items-stretch gap-3 h-full overflow-hidden">
                     {/* Left Column */}
-                    <div id="command-left-column" onScroll={handleLeftColScroll} className="w-[calc(100vw-72px)] md:w-[400px] flex-shrink-0 snap-center flex flex-col gap-6 overflow-y-auto h-full custom-scrollbar pr-1 pb-8">
+                    <div 
+                      id="command-left-column" 
+                      onScroll={handleLeftColScroll} 
+                      onMouseDown={handleLeftColMouseDown}
+                      onMouseMove={handleLeftColMouseMove}
+                      onMouseUp={handleLeftColMouseUpOrLeave}
+                      onMouseLeave={handleLeftColMouseUpOrLeave}
+                      onWheel={handleLeftColWheel}
+                      style={{ cursor: 'grab' }}
+                      className="w-[calc(100vw-72px)] md:w-[400px] flex-shrink-0 snap-center flex flex-col gap-6 overflow-y-auto h-full custom-scrollbar pr-1 pb-8"
+                    >
                     <div style={S.card} className="relative overflow-hidden">
                       <div className="text-[10px] font-black text-amber-500 tracking-[0.2em] mb-2">HYBRID AI NODE</div>
                       <h2 className="text-4xl font-black italic text-slate-200 mb-8">Command<span className="text-slate-500">Center</span></h2>
